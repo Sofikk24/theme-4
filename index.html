@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebXR Babylon.js HelloWorld</title>
+    <!-- Подключение Babylon.js -->
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+
+    <!-- Добавляем стили для Canvas -->
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Canvas для рендеринга 3D-сцены -->
+    <canvas id="renderCanvas"></canvas>
+
+    <script>
+        // Проверим подключение Babylon.js
+        if (BABYLON) {
+            console.log("Babylon.js подключен и готов к использованию!");
+        } else {
+            console.log("Ошибка: Babylon.js не подключен.");
+        }
+    </script>
+    
+    <script>
+        // Получаем ссылку на элемент canvas
+        var canvas = document.getElementById("renderCanvas");
+    
+        // Создаем Babylon.js движок
+        var engine = new BABYLON.Engine(canvas, true);
+    
+        // Функция для создания сцены
+        var createScene = function () {
+            var scene = new BABYLON.Scene(engine);
+    
+            // Создаем камеру, которая позволяет вращаться вокруг объекта
+            var camera = new BABYLON.ArcRotateCamera("camera1", Math.PI / 2, Math.PI / 4, 4, new BABYLON.Vector3(0, 1, 0), scene);
+            camera.attachControl(canvas, true); // Привязываем управление камеры к canvas
+    
+            // Добавляем свет
+            var light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(1, 1, 0), scene);
+            light.intensity = 0.7; // Регулируем яркость света
+    
+            // Добавляем сферу в сцену
+            var sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {diameter: 1}, scene);
+            sphere.position.y = 1; // Поднимаем сферу немного выше, чтобы она находилась на уровне глаз
+    
+            // Добавляем поддержку WebXR
+            scene.createDefaultXRExperienceAsync().then((xr) => {
+                console.log("WebXR режим готов к использованию!");
+                
+                // Включаем кнопку для перехода в VR
+                const xrHelper = xr.baseExperience;
+                
+                if (xrHelper) {
+                    console.log("Создаем кнопку для входа в VR");
+                    
+                    // Добавляем кнопку в правый нижний угол экрана
+                    var enterVRButton = document.createElement("button");
+                    enterVRButton.innerHTML = "Enter VR";
+                    enterVRButton.style.position = "absolute";
+                    enterVRButton.style.bottom = "10px";
+                    enterVRButton.style.right = "10px";
+                    enterVRButton.style.padding = "10px";
+                    enterVRButton.style.zIndex = "100";
+                    document.body.appendChild(enterVRButton);
+        
+                    enterVRButton.onclick = function () {
+                        xrHelper.enterXRAsync("immersive-vr", "local-floor").then(() => {
+                            console.log("Вход в VR");
+                        }).catch((error) => {
+                            console.error("Ошибка при входе в VR:", error);
+                        });
+                    };
+                }
+            }).catch((error) => {
+                console.error("WebXR не поддерживается или произошла ошибка:", error);
+            });
+    
+            // Добавляем возможность взаимодействия с объектом
+            sphere.actionManager = new BABYLON.ActionManager(scene);
+            sphere.actionManager.registerAction(new BABYLON.ExecuteCodeAction(
+                BABYLON.ActionManager.OnPickTrigger, function () {
+                    sphere.position.y += 1; // Перемещаем сферу вверх при клике
+                }
+            ));
+    
+            return scene;
+        };
+    
+        // Создаем сцену
+        var scene = createScene();
+    
+        // Запускаем рендеринг сцены
+        engine.runRenderLoop(function () {
+            scene.render();
+        });
+    
+        // Изменяем размер движка при изменении размеров окна
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script>
+    
+</body>
+</html>
+
+
+
+
+
